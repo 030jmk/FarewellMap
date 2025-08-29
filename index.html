@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map Point Selector</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        #map {
+            height: 400px;
+            width: 100%;
+            border-radius: 8px;
+        }
+        
+        .leaflet-container {
+            font-family: inherit;
+        }
+        
+        .heart-marker {
+            background: none !important;
+            border: none !important;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 p-4">
+    <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-6">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">Map Point Selector</h1>
+        
+        <!-- Map Controls -->
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Map Style:</label>
+            <select id="tileLayerSelect" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                <option value="stamen_toner">Stamen Toner</option>
+                <option value="stamen_toner_background">Stamen Toner Background</option>
+                <option value="cartodb_positron">CartoDB Positron No Labels</option>
+            </select>
+        </div>
+        
+        <!-- Map Container -->
+        <div id="map" class="mb-6 border border-gray-300"></div>
+        
+        <!-- Coordinates Display -->
+        <div id="coordinates" class="mb-4 p-3 bg-blue-50 rounded-md border border-blue-200 hidden">
+            <p class="text-sm text-blue-800">
+                <strong>Selected Location:</strong> <span id="coordText">No location selected</span>
+            </p>
+        </div>
+        
+        <!-- Text Fields for PDF -->
+        <div class="mb-6 space-y-4">
+            <h3 class="text-lg font-semibold text-gray-800">PDF Content</h3>
+            
+            <!-- PDF Layout Controls -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Map Shape:</label>
+                    <select id="mapShape" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        <option value="circle">Circle</option>
+                        <option value="square">Square</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="mapSize" class="block text-sm font-medium text-gray-700 mb-2">Map Size: <span id="sizeValue">160mm</span></label>
+                    <input type="range" id="mapSize" min="80" max="160" value="180" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                </div>
+                <div class="flex items-end">
+                    <button id="previewBtn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                        Preview PDF Layout
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Text Field 1 -->
+            <div>
+                <label for="textField1" class="block text-sm font-medium text-gray-700 mb-2">Text Field 1:</label>
+                <div class="flex space-x-2 mb-2">
+                    <input 
+                        type="text" 
+                        id="textField1" 
+                        class="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter first text...">
+                    <select id="font1" class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        <option value="helvetica">Helvetica</option>
+                        <option value="times">Times</option>
+                        <option value="courier">Courier</option>
+                    </select>
+                    <select id="align1" class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        <option value="left">Left</option>
+                        <option value="center">Center</option>
+                        <option value="right">Right</option>
+                    </select>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <label for="fontSize1" class="text-sm text-gray-600">Size:</label>
+                    <input type="range" id="fontSize1" min="8" max="80" value="12" class="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    <span id="fontSizeValue1" class="text-sm text-gray-600 w-8">12pt</span>
+                </div>
+            </div>
+            
+            <!-- Text Field 2 -->
+            <div>
+                <label for="textField2" class="block text-sm font-medium text-gray-700 mb-2">Text Field 2:</label>
+                <div class="flex space-x-2 mb-2">
+                    <input 
+                        type="text" 
+                        id="textField2" 
+                        class="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter second text...">
+                    <select id="font2" class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        <option value="helvetica">Helvetica</option>
+                        <option value="times">Times</option>
+                        <option value="courier">Courier</option>
+                    </select>
+                    <select id="align2" class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        <option value="left">Left</option>
+                        <option value="center">Center</option>
+                        <option value="right">Right</option>
+                    </select>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <label for="fontSize2" class="text-sm text-gray-600">Size:</label>
+                    <input type="range" id="fontSize2" min="8" max="24" value="12" class="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    <span id="fontSizeValue2" class="text-sm text-gray-600 w-8">12pt</span>
+                </div>
+            </div>
+            
+            <!-- Text Field 3 (Geolocation - auto-filled) -->
+            <div>
+                <label for="textField3" class="block text-sm font-medium text-gray-700 mb-2">Text Field 3 (Geolocation):</label>
+                <div class="flex space-x-2 mb-2">
+                    <input 
+                        type="text" 
+                        id="textField3" 
+                        class="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
+                        placeholder="Will be auto-filled with coordinates"
+                        readonly>
+                    <select id="font3" class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        <option value="helvetica">Helvetica</option>
+                        <option value="times">Times</option>
+                        <option value="courier">Courier</option>
+                    </select>
+                    <select id="align3" class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        <option value="left">Left</option>
+                        <option value="center">Center</option>
+                        <option value="right">Right</option>
+                    </select>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <label for="fontSize3" class="text-sm text-gray-600">Size:</label>
+                    <input type="range" id="fontSize3" min="8" max="80" value="12" class="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    <span id="fontSizeValue3" class="text-sm text-gray-600 w-8">12pt</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- PDF Preview Modal -->
+        <div id="previewModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+            <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold text-gray-800">PDF Layout Preview</h3>
+                        <button id="closePreview" class="text-gray-400 hover:text-gray-600">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <!-- A4 Preview Container -->
+                    <div class="bg-white border-2 border-gray-300 mx-auto" style="width: 210px; height: 297px; transform: scale(0.8); transform-origin: top;">
+                        <!-- Map Preview -->
+                        <div id="mapPreview" class="border border-gray-400 bg-gray-100 flex items-center justify-center text-xs text-gray-500" style="position: absolute; left: 50%; transform: translateX(-50%); margin-top: 20px;">
+                            Map Area
+                        </div>
+                        
+                        <!-- Text Preview -->
+                        <div id="textPreview" class="absolute text-xs text-gray-700 px-4" style="width: 170px; left: 20px;">
+                            <div class="mb-2">Text Field 1 (Sample)</div>
+                            <div class="mb-2">Text Field 2 (Sample)</div>
+                            <div class="mb-2">Text Field 3 (Coordinates)</div>
+                        </div>
+                        
+                        <!-- Timestamp Preview -->
+                        <div class="absolute bottom-3 left-4 text-xs text-gray-400">
+                            Generated: [timestamp]
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Export Button -->
+        <div class="text-center">
+            <button 
+                id="exportBtn" 
+                class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled>
+                Export to PDF
+            </button>
+        </div>
+        
+        <!-- Instructions -->
+        <div class="mt-6 p-4 bg-gray-100 rounded-md">
+            <h3 class="text-sm font-semibold text-gray-700 mb-2">Instructions:</h3>
+            <ul class="text-sm text-gray-600 space-y-1">
+                <li>1. Click anywhere on the map to select a location (heart marker will appear)</li>
+                <li>2. Fill in the text fields (third field auto-fills with coordinates)</li>
+                <li>3. Choose fonts, alignment, and font sizes for each text field</li>
+                <li>4. Adjust map shape (circle/square) and size using controls</li>
+                <li>5. Click "Preview PDF Layout" to see how it will look</li>
+                <li>6. Click "Export to PDF" to download your customized map</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <script>
+        // Global variables
+        let map;
+        let currentMarker;
+        let selectedCoords = null;
+        
+        // Tile layer definitions
+        const tileLayers = {
+            stamen_toner: {
+                url: 'https://tiles.stadiamaps.com/tiles/stamen_toner/{z}/{x}/{y}{r}.png',
+                attribution: '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a> &copy; <a href="https://stamen.com/">Stamen Design</a> &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a>'
+            },
+            stamen_toner_background: {
+                url: 'https://tiles.stadiamaps.com/tiles/stamen_toner_background/{z}/{x}/{y}{r}.png',
+                attribution: '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a> &copy; <a href="https://stamen.com/">Stamen Design</a> &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a>'
+            },
+            cartodb_positron: {
+                url: 'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png',
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+            }
+        };
+        
+        // Initialize map
+        function initMap() {
+            // Frankfurt coordinates
+            map = L.map('map').setView([50.1109, 8.6821], 12);
+            
+            // Add default tile layer
+            updateTileLayer('stamen_toner');
+            
+            // Add click event
+            map.on('click', onMapClick);
+        }
+        
+        // Update tile layer
+        function updateTileLayer(layerKey) {
+            // Remove existing layers
+            map.eachLayer(function(layer) {
+                if (layer instanceof L.TileLayer) {
+                    map.removeLayer(layer);
+                }
+            });
+            
+            // Add new tile layer
+            const layerConfig = tileLayers[layerKey];
+            L.tileLayer(layerConfig.url, {
+                attribution: layerConfig.attribution,
+                maxZoom: 18
+            }).addTo(map);
+        }
+        
+        // Handle map click
+        function onMapClick(e) {
+            const lat = e.latlng.lat.toFixed(6);
+            const lng = e.latlng.lng.toFixed(6);
+            
+            // Remove existing marker
+            if (currentMarker) {
+                map.removeLayer(currentMarker);
+            }
+            
+            // Create heart icon
+            const heartIcon = L.divIcon({
+                html: '<div style="color: red; font-size: 24px; text-align: center; line-height: 1;">❤️</div>',
+                iconSize: [24, 24],
+                iconAnchor: [12, 12],
+                className: 'heart-marker'
+            });
+            
+            // Add new marker with heart
+            currentMarker = L.marker([lat, lng], { icon: heartIcon }).addTo(map);
+            
+            // Update coordinates
+            selectedCoords = { lat: parseFloat(lat), lng: parseFloat(lng) };
+            
+            // Update UI
+            const coordText = `${lat}°N, ${lng}°E`;
+            document.getElementById('coordText').textContent = coordText;
+            document.getElementById('textField3').value = formatCoordinates(selectedCoords.lat, selectedCoords.lng);
+            document.getElementById('coordinates').classList.remove('hidden');
+            document.getElementById('exportBtn').disabled = false;
+            document.getElementById('previewBtn').disabled = false;
+        }
+        
+        // Format coordinates for display
+        function formatCoordinates(lat, lng) {
+            const latDir = lat >= 0 ? 'N' : 'S';
+            const lngDir = lng >= 0 ? 'E' : 'W';
+            return `${Math.abs(lat).toFixed(6)}°${latDir}, ${Math.abs(lng).toFixed(6)}°${lngDir}`;
+        }
+        
+        // Create circular or square canvas from rectangular canvas
+        function createShapedCanvas(sourceCanvas, shape) {
+            const size = Math.min(sourceCanvas.width, sourceCanvas.height);
+            const shapedCanvas = document.createElement('canvas');
+            shapedCanvas.width = size;
+            shapedCanvas.height = size;
+            
+            const ctx = shapedCanvas.getContext('2d');
+            
+            if (shape === 'circle') {
+                // Create circular clipping path
+                ctx.beginPath();
+                ctx.arc(size/2, size/2, size/2, 0, 2 * Math.PI);
+                ctx.clip();
+            }
+            // For square, no clipping needed
+            
+            // Draw the source canvas (centered)
+            const offsetX = (sourceCanvas.width - size) / 2;
+            const offsetY = (sourceCanvas.height - size) / 2;
+            ctx.drawImage(sourceCanvas, -offsetX, -offsetY);
+            
+            return shapedCanvas;
+        }
+        
+        // Export to PDF
+        async function exportToPDF() {
+            if (!selectedCoords) {
+                alert('Please select a location on the map first.');
+                return;
+            }
+            
+            const button = document.getElementById('exportBtn');
+            button.disabled = true;
+            button.textContent = 'Generating PDF...';
+            
+            try {
+                // Capture map
+                const mapElement = document.getElementById('map');
+                const canvas = await html2canvas(mapElement, {
+                    useCORS: true,
+                    allowTaint: true,
+                    scale: 2
+                });
+                
+                // Get user preferences
+                const mapShape = document.getElementById('mapShape').value;
+                const mapSize = parseInt(document.getElementById('mapSize').value);
+                
+                // Create shaped version
+                const shapedCanvas = createShapedCanvas(canvas, mapShape);
+                
+                // Create PDF (A4 format)
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'mm', 'a4'); // A4: 210 x 297 mm
+                
+                // Add map image with user-defined size
+                const imgData = shapedCanvas.toDataURL('image/png');
+                const centerX = (210 - mapSize) / 2; // Center on A4 width
+                const startY = 20; // Start near top
+                
+                pdf.addImage(imgData, 'PNG', centerX, startY, mapSize, mapSize);
+                
+                // Calculate text start position based on map size
+                const textStartY = startY + mapSize + 30; // Start below map
+                
+                // Get text field values, fonts, alignments, and sizes
+                const text1 = document.getElementById('textField1').value;
+                const font1 = document.getElementById('font1').value;
+                const align1 = document.getElementById('align1').value;
+                const fontSize1 = parseInt(document.getElementById('fontSize1').value);
+                
+                const text2 = document.getElementById('textField2').value;
+                const font2 = document.getElementById('font2').value;
+                const align2 = document.getElementById('align2').value;
+                const fontSize2 = parseInt(document.getElementById('fontSize2').value);
+                
+                const text3 = document.getElementById('textField3').value;
+                const font3 = document.getElementById('font3').value;
+                const align3 = document.getElementById('align3').value;
+                const fontSize3 = parseInt(document.getElementById('fontSize3').value);
+                
+                // Helper function to add text with alignment and custom font size
+                function addTextWithAlignment(text, font, alignment, fontSize, y) {
+                    if (!text.trim()) return;
+                    
+                    pdf.setFont(font);
+                    pdf.setFontSize(fontSize);
+                    const splitText = pdf.splitTextToSize(text, 170);
+                    
+                    let x = 20; // Default left alignment
+                    if (alignment === 'center') {
+                        x = 105; // Center of A4 page
+                    } else if (alignment === 'right') {
+                        x = 190; // Right side with margin
+                    }
+                    
+                    pdf.text(splitText, x, y, { align: alignment });
+                }
+                
+                // Calculate dynamic line height based on largest font size
+                const maxFontSize = Math.max(fontSize1, fontSize2, fontSize3);
+                const dynamicLineHeight = Math.max(20, maxFontSize * 1.5); // Minimum 20mm or 1.5x font size
+                
+                // Add text fields with their respective alignments and font sizes
+                addTextWithAlignment(text1, font1, align1, fontSize1, textStartY);
+                addTextWithAlignment(text2, font2, align2, fontSize2, textStartY + dynamicLineHeight);
+                addTextWithAlignment(text3, font3, align3, fontSize3, textStartY + (dynamicLineHeight * 2));
+                
+                // Add timestamp at bottom
+                const timestamp = new Date().toLocaleString();
+                pdf.setFont('helvetica');
+                pdf.setFontSize(8);
+                //pdf.text(`Generated: ${timestamp}`, 20, 285);
+                pdf.text(` `, 20, 285);
+                
+                // Download PDF
+                pdf.save('location-map.pdf');
+                
+            } catch (error) {
+                console.error('Error generating PDF:', error);
+                alert('Error generating PDF. Please try again.');
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Export to PDF';
+            }
+        }
+        
+        // Update preview
+        function updatePreview() {
+            if (!selectedCoords) return;
+            
+            const mapShape = document.getElementById('mapShape').value;
+            const mapSize = parseInt(document.getElementById('mapSize').value);
+            
+            // Update map preview
+            const mapPreview = document.getElementById('mapPreview');
+            mapPreview.style.width = mapSize * 0.8 + 'px'; // Scale for preview
+            mapPreview.style.height = mapSize * 0.8 + 'px';
+            mapPreview.style.marginTop = '16px'; // 20mm * 0.8 scale
+            
+            if (mapShape === 'circle') {
+                mapPreview.style.borderRadius = '50%';
+                mapPreview.textContent = 'Circular Map';
+            } else {
+                mapPreview.style.borderRadius = '4px';
+                mapPreview.textContent = 'Square Map';
+            }
+            
+            // Get font sizes for dynamic spacing calculation
+            const fontSize1 = parseInt(document.getElementById('fontSize1').value);
+            const fontSize2 = parseInt(document.getElementById('fontSize2').value);
+            const fontSize3 = parseInt(document.getElementById('fontSize3').value);
+            const maxFontSize = Math.max(fontSize1, fontSize2, fontSize3);
+            const dynamicLineHeight = Math.max(20, maxFontSize * 1.5) * 0.8; // Scale for preview
+            
+            // Update text preview position
+            const textPreview = document.getElementById('textPreview');
+            const textStartY = (20 + mapSize + 30) * 0.8; // Scale calculation
+            textPreview.style.marginTop = textStartY + 'px';
+            
+            // Update preview text content with font sizes
+            const text1 = document.getElementById('textField1').value || 'Text Field 1 (Sample)';
+            const text2 = document.getElementById('textField2').value || 'Text Field 2 (Sample)';
+            const text3 = document.getElementById('textField3').value || 'Text Field 3 (Coordinates)';
+            
+            const align1 = document.getElementById('align1').value;
+            const align2 = document.getElementById('align2').value;
+            const align3 = document.getElementById('align3').value;
+            
+            const font1 = document.getElementById('font1').value;
+            const font2 = document.getElementById('font2').value;
+            const font3 = document.getElementById('font3').value;
+            
+            // Convert font sizes for preview (scale down)
+            const previewFontSize1 = fontSize1 * 0.6; // Scale for small preview
+            const previewFontSize2 = fontSize2 * 0.6;
+            const previewFontSize3 = fontSize3 * 0.6;
+            
+            textPreview.innerHTML = `
+                <div class="mb-2" style="text-align: ${align1}; font-family: ${font1}; font-size: ${previewFontSize1}px;">${text1}</div>
+                <div class="mb-2" style="text-align: ${align2}; font-family: ${font2}; font-size: ${previewFontSize2}px; margin-top: ${dynamicLineHeight * 0.6}px;">${text2}</div>
+                <div class="mb-2" style="text-align: ${align3}; font-family: ${font3}; font-size: ${previewFontSize3}px; margin-top: ${dynamicLineHeight * 0.6}px;">${text3}</div>
+            `;
+        }
+        
+        // Show preview modal
+        function showPreview() {
+            updatePreview();
+            document.getElementById('previewModal').classList.remove('hidden');
+            document.getElementById('previewModal').classList.add('flex');
+        }
+        
+        // Hide preview modal
+        function hidePreview() {
+            document.getElementById('previewModal').classList.add('hidden');
+            document.getElementById('previewModal').classList.remove('flex');
+        }
+        
+        // Event listeners
+        document.getElementById('tileLayerSelect').addEventListener('change', function(e) {
+            updateTileLayer(e.target.value);
+        });
+        
+        document.getElementById('exportBtn').addEventListener('click', exportToPDF);
+        document.getElementById('previewBtn').addEventListener('click', showPreview);
+        document.getElementById('closePreview').addEventListener('click', hidePreview);
+        
+        // Size slider update
+        document.getElementById('mapSize').addEventListener('input', function(e) {
+            document.getElementById('sizeValue').textContent = e.target.value + 'mm';
+        });
+        
+        // Font size slider updates
+        document.getElementById('fontSize1').addEventListener('input', function(e) {
+            document.getElementById('fontSizeValue1').textContent = e.target.value + 'pt';
+        });
+        
+        document.getElementById('fontSize2').addEventListener('input', function(e) {
+            document.getElementById('fontSizeValue2').textContent = e.target.value + 'pt';
+        });
+        
+        document.getElementById('fontSize3').addEventListener('input', function(e) {
+            document.getElementById('fontSizeValue3').textContent = e.target.value + 'pt';
+        });
+        
+        // Update preview when settings change
+        ['mapShape', 'mapSize', 'textField1', 'textField2', 'textField3', 'align1', 'align2', 'align3', 'font1', 'font2', 'font3', 'fontSize1', 'fontSize2', 'fontSize3'].forEach(id => {
+            document.getElementById(id).addEventListener('input', updatePreview);
+            document.getElementById(id).addEventListener('change', updatePreview);
+        });
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', initMap);
+    </script>
+</body>
+</html>
